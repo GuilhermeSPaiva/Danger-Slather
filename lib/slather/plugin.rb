@@ -41,6 +41,8 @@ module Danger
     def total_coverage
       unless @project.nil?
         @project.ignore_list = []
+        @project.configure
+
         @total_coverage ||= begin
           total_project_lines = 0
           total_project_lines_tested = 0
@@ -76,7 +78,7 @@ module Danger
     # @option options [Float] :minimum_coverage the minimum code coverage required for a file
     # @option options [Symbol] :notify_level the level of notification
     # @return [Array<String>]
-    def notify_if_modified_file_is_less_than(options)
+    def notify_if_changed_file_is_less_than(options)
       minimum_coverage = options[:minimum_coverage]
       notify_level = options[:notify_level] || :fail
 
