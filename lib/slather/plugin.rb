@@ -53,9 +53,13 @@ module Danger
     # Total coverage of the project
     # @return   [Float]
     def total_coverage
+      require 'slather'
+      @project = Slather::Project.open(@@project_path)
+      @project.scheme = @@scheme
+      @project.workspace = @@workspace
+      @project.configure
+
       unless @project.nil?
-        @project.ignore_list = []
-        @project.configure
 
         @total_coverage ||= begin
           total_project_lines = 0
@@ -75,13 +79,6 @@ module Danger
     # @option options [Symbol] :notify_level the level of notification
     # @return [Array<String>]
     def notify_if_coverage_is_less_than(options)
-      require 'slather'
-      @project = Slather::Project.open(@@project_path)
-      @project.scheme = @@scheme
-      @project.workspace = @@workspace
-      @project.ignore_list = @@ignore_list
-      @project.configure
-
       minimum_coverage = options[:minimum_coverage]
       notify_level = options[:notify_level] || :fail
       if total_coverage < minimum_coverage
@@ -147,6 +144,13 @@ module Danger
     # Build a coverage markdown table of the modified files coverage
     # @return [String]
     def modified_files_coverage_table
+      require 'slather'
+      @project = Slather::Project.open(@@project_path)
+      @project.scheme = @@scheme
+      @project.workspace = @@workspace
+      @project.ignore_list = @@ignore_list
+      @project.configure
+      
       unless @project.nil?
         line = ''
         if all_modified_files_coverage.count > 0
@@ -277,7 +281,7 @@ module Danger
       @project.workspace = @@workspace
       @project.ignore_list = @@ignore_list
       @project.configure
-      
+
       minimum_coverage = options[:minimum_coverage]
       notify_level = options[:notify_level] || :warn
 
