@@ -71,6 +71,12 @@ module Danger
           @total_coverage = (total_project_lines_tested / total_project_lines.to_f) * 100.0
         end
       end
+
+      @project = Slather::Project.open(@@project_path)
+      @project.scheme = @@scheme
+      @project.workspace = @@workspace
+      @project.ignore_list = @@ignore_list
+      @project.configure
     end
 
     # Method to check if the coverage of the project is at least a minumum
@@ -97,13 +103,6 @@ module Danger
     # @option options [Symbol] :notify_level the level of notification
     # @return [Array<String>]
     def notify_if_changed_file_is_less_than(options)
-      require 'slather'
-      @project = Slather::Project.open(@@project_path)
-      @project.scheme = @@scheme
-      @project.workspace = @@workspace
-      @project.ignore_list = @@ignore_list
-      @project.configure
-
       minimum_coverage = options[:minimum_coverage]
       notify_level = options[:notify_level] || :fail
 
@@ -144,13 +143,6 @@ module Danger
     # Build a coverage markdown table of the modified files coverage
     # @return [String]
     def modified_files_coverage_table
-      require 'slather'
-      @project = Slather::Project.open(@@project_path)
-      @project.scheme = @@scheme
-      @project.workspace = @@workspace
-      @project.ignore_list = @@ignore_list
-      @project.configure
-      
       unless @project.nil?
         line = ''
         if all_modified_files_coverage.count > 0
@@ -239,13 +231,6 @@ module Danger
     # @option options [Symbol] :notify_level the level of notification
     # @return [Array<String>]
     def notify_if_added_file_is_less_than(options)
-      require 'slather'
-      @project = Slather::Project.open(@@project_path)
-      @project.scheme = @@scheme
-      @project.workspace = @@workspace
-      @project.ignore_list = @@ignore_list
-      @project.configure
-
       minimum_coverage = options[:minimum_coverage]
       notify_level = options[:notify_level] || :fail
 
@@ -275,13 +260,6 @@ module Danger
     # @option options [Symbol] :notify_level the level of notification
     # @return [Array<String>]
     def notify_if_modified_file_is_less_than(options)
-      require 'slather'
-      @project = Slather::Project.open(@@project_path)
-      @project.scheme = @@scheme
-      @project.workspace = @@workspace
-      @project.ignore_list = @@ignore_list
-      @project.configure
-
       minimum_coverage = options[:minimum_coverage]
       notify_level = options[:notify_level] || :warn
 
