@@ -15,12 +15,11 @@ module Danger
   # @see  BrunoMazzo/danger-slather
   # @tags slather, code coverage, xcode, iOS
   class DangerSlather < Plugin
-
     # Defines class variables for project rebuild
-    @@project_path = ""
-    @@scheme = ""
-    @@workspace = ""
-    @@ignore_list = []
+    @project_path = ''
+    @scheme = ''
+    @workspace = ''
+    @ignore_list = []
 
     # Required method to configure slather. It's required at least the path
     # to the project and the scheme used with code coverage enabled
@@ -69,10 +68,10 @@ module Danger
       @project = Slather::Project.open(@@project_path)
       @project.scheme = @@scheme
       @project.workspace = @@workspace
+      @project.ignore_list = @@ignore_list
       @project.configure
 
       unless @project.nil?
-
         @total_coverage ||= begin
           total_project_lines = 0
           total_project_lines_tested = 0
@@ -83,12 +82,6 @@ module Danger
           @total_coverage = (total_project_lines_tested / total_project_lines.to_f) * 100.0
         end
       end
-
-      @project = Slather::Project.open(@@project_path)
-      @project.scheme = @@scheme
-      @project.workspace = @@workspace
-      @project.ignore_list = @@ignore_list
-      @project.configure
     end
 
     # Method to check if the coverage of the project is at least a minumum
@@ -114,7 +107,7 @@ module Danger
     # @option options [Float] :minimum_coverage the minimum code coverage required for a file
     # @option options [Symbol] :notify_level the level of notification
     # @return [Array<String>]
-    def notify_if_changed_file_is_less_than(options)
+    def notify_if_modified_file_is_less_than(options)
       minimum_coverage = options[:minimum_coverage]
       notify_level = options[:notify_level] || :fail
 
@@ -190,7 +183,7 @@ module Danger
       end
     end
 
-    # Array of files that we have coverage information and was modified or added
+    # Array of files that we have coverage information and was modified
     # @return [Array<File>]
     def all_modified_files_coverage
       unless @project.nil?
@@ -211,14 +204,14 @@ module Danger
     # @return [Array<File>]
     def modified_files_coverage
       unless @project.nil?
-        all_modified_files_coverage ||= begin
+        @all_modified_files_coverage ||= begin
           modified_files = git.modified_files.nil? ? [] : git.modified_files
           @project.coverage_files.select do |file|
             modified_files.include? file.source_file_pathname_relative_to_repo_root.to_s
           end
         end
 
-        all_modified_files_coverage
+        @all_modified_files_coverage
       end
     end
 
@@ -226,14 +219,14 @@ module Danger
     # @return [Array<File>]
     def added_files_coverage
       unless @project.nil?
-        all_added_files_coverage ||= begin
+        @all_added_files_coverage ||= begin
           added_files = git.added_files.nil? ? [] : git.added_files
           @project.coverage_files.select do |file|
             added_files.include? file.source_file_pathname_relative_to_repo_root.to_s
           end
         end
 
-        all_added_files_coverage
+        @all_added_files_coverage
       end
     end
 
@@ -242,13 +235,13 @@ module Danger
     # @option options [Float] :minimum_coverage the minimum code coverage required for a file
     # @option options [Symbol] :notify_level the level of notification
     # @return [Array<String>]
-    def notify_if_added_file_is_less_than(options)
+    def notify_if_only_added_file_is_less_than(options)
       minimum_coverage = options[:minimum_coverage]
       notify_level = options[:notify_level] || :fail
 
       added_files = added_files_coverage
 
-      if added_files.count > 0
+      if added_files.count.positive?
         files_to_notify = added_files.select do |file|
           file.percentage_lines_tested < minimum_coverage
         end
@@ -271,13 +264,13 @@ module Danger
     # @option options [Float] :minimum_coverage the minimum code coverage required for a file
     # @option options [Symbol] :notify_level the level of notification
     # @return [Array<String>]
-    def notify_if_modified_file_is_less_than(options)
+    def notify_if_only_modified_file_is_less_than(options)
       minimum_coverage = options[:minimum_coverage]
       notify_level = options[:notify_level] || :warn
 
       modified_files = modified_files_coverage
 
-      if modified_files.count > 0
+      if modified_files.count.positive?
         files_to_notify = modified_files.select do |file|
           file.percentage_lines_tested < minimum_coverage
         end
