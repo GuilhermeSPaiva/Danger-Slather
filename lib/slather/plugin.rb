@@ -65,10 +65,10 @@ module Danger
     # @return   [Float]
     def total_coverage
       require 'slather'
-      @project = Slather::Project.open(@@project_path)
-      @project.scheme = @@scheme
-      @project.workspace = @@workspace
-      @project.ignore_list = @@ignore_list
+      @project = Slather::Project.open(@project_path)
+      @project.scheme = @scheme
+      @project.workspace = @workspace
+      @project.ignore_list = @ignore_list
       @project.configure
 
       unless @project.nil?
