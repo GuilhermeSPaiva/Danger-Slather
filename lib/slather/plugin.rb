@@ -17,10 +17,10 @@ module Danger
   class DangerSlather < Plugin
     
     # Defines class variables for project rebuild
-    @@project_path = ''
-    @@scheme = ''
-    @@workspace = ''
-    @@ignore_list = []
+    @@project_path = ""
+    @@project_scheme = ""
+    @@project_workspace = ""
+    @@project_ignore_list = []
 
     # Required method to configure slather. It's required at least the path
     # to the project and the scheme used with code coverage enabled
@@ -30,9 +30,9 @@ module Danger
 
       # Saving options to class variables
       @@project_path = xcodeproj_path
-      @@scheme = scheme
-      @@workspace = options[:workspace]
-      @@ignore_list = options[:ignore_list]
+      @@project_scheme = scheme
+      @@project_workspace = options[:workspace]
+      @@project_ignore_list = options[:ignore_list]
 
       @project = Slather::Project.open(xcodeproj_path)
       @project.scheme = scheme
@@ -67,9 +67,9 @@ module Danger
     def total_coverage
       require 'slather'
       @project = Slather::Project.open(@@project_path)
-      @project.scheme = @@scheme
-      @project.workspace = @@workspace
-      @project.ignore_list = @@ignore_list
+      @project.scheme = @@project_scheme
+      @project.workspace = @@project_workspace
+      @project.ignore_list = @@project_ignore_list
       @project.configure
 
       unless @project.nil?
@@ -83,12 +83,6 @@ module Danger
           @total_coverage = (total_project_lines_tested / total_project_lines.to_f) * 100.0
         end
       end
-
-      @project = Slather::Project.open(@@project_path)
-      @project.scheme = @@scheme
-      @project.workspace = @@workspace
-      @project.ignore_list = @@ignore_list
-      @project.configure
     end
 
     # Method to check if the coverage of the project is at least a minumum
