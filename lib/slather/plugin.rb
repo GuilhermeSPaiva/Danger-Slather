@@ -15,11 +15,25 @@ module Danger
   # @see  BrunoMazzo/danger-slather
   # @tags slather, code coverage, xcode, iOS
   class DangerSlather < Plugin
+    
+    # Defines class variables for project rebuild
+    @@project_path = ""
+    @@project_scheme = ""
+    @@project_workspace = ""
+    @@project_ignore_list = []
+
     # Required method to configure slather. It's required at least the path
     # to the project and the scheme used with code coverage enabled
     # @return  [void]
     def configure(xcodeproj_path, scheme, options: {})
       require 'slather'
+
+      # Saving options to class variables
+      @@project_path = xcodeproj_path
+      @@project_scheme = scheme
+      @@project_workspace = options[:workspace]
+      @@project_ignore_list = options[:ignore_list]
+
       @project = Slather::Project.open(xcodeproj_path)
       @project.scheme = scheme
       @project.workspace = options[:workspace]
@@ -51,6 +65,13 @@ module Danger
     # Total coverage of the project
     # @return   [Float]
     def total_coverage
+      require 'slather'
+      @project = Slather::Project.open(@@project_path)
+      @project.scheme = @@project_scheme
+      @project.workspace = @@project_workspace
+      @project.ignore_list = @@project_ignore_list
+      @project.configure
+
       unless @project.nil?
         @total_coverage ||= begin
           total_project_lines = 0
@@ -180,6 +201,94 @@ module Danger
       end
     end
 
-    private :all_modified_files_coverage, :total_coverage_markdown
+    # Array of files that we have coverage information and was modified
+    # @return [Array<File>]
+    def only_modified_files_coverage
+      unless @project.nil?
+        @only_modified_files_coverage ||= begin
+          modified_files = git.modified_files.nil? ? [] : git.modified_files
+          @project.coverage_files.select do |file|
+            modified_files.include? file.source_file_pathname_relative_to_repo_root.to_s
+          end
+        end
+
+        @only_modified_files_coverage
+      end
+    end
+
+    # Array of files that we have coverage information and was added
+    # @return [Array<File>]
+    def only_added_files_coverage
+      unless @project.nil?
+        @only_added_files_coverage ||= begin
+          added_files = git.added_files.nil? ? [] : git.added_files
+          @project.coverage_files.select do |file|
+            added_files.include? file.source_file_pathname_relative_to_repo_root.to_s
+          end
+        end
+
+        @only_added_files_coverage
+      end
+    end
+
+    # Method to check if the coverage of added files is at least a minumum
+    # @param options [Hash] a hash with the options
+    # @option options [Float] :minimum_coverage the minimum code coverage required for a file
+    # @option options [Symbol] :notify_level the level of notification
+    # @return [Array<String>]
+    def notify_if_only_added_file_is_less_than(options)
+      minimum_coverage = options[:minimum_coverage]
+      notify_level = options[:notify_level] || :fail
+
+      added_files = only_added_files_coverage
+
+      if added_files.count.positive?
+        files_to_notify = added_files.select do |file|
+          file.percentage_lines_tested < minimum_coverage
+        end
+        notify_messages = files_to_notify.map do |file|
+          "#{file.source_file_pathname_relative_to_repo_root} has less than #{minimum_coverage}% code coverage"
+        end
+
+        notify_messages.each do |message|
+          if notify_level == :fail
+            fail message
+          else
+            warn message
+          end
+        end
+      end
+    end
+
+    # Method to check if the coverage of modified files is at least a minumum
+    # @param options [Hash] a hash with the options
+    # @option options [Float] :minimum_coverage the minimum code coverage required for a file
+    # @option options [Symbol] :notify_level the level of notification
+    # @return [Array<String>]
+    def notify_if_only_modified_file_is_less_than(options)
+      minimum_coverage = options[:minimum_coverage]
+      notify_level = options[:notify_level] || :warn
+
+      modified_files = only_modified_files_coverage
+
+      if modified_files.count.positive?
+        files_to_notify = modified_files.select do |file|
+          file.percentage_lines_tested < minimum_coverage
+        end
+        notify_messages = files_to_notify.map do |file|
+          "#{file.source_file_pathname_relative_to_repo_root} has less than #{minimum_coverage}% code coverage"
+        end
+
+        notify_messages.each do |message|
+          if notify_level == :fail
+            fail message
+          else
+            warn message
+          end
+        end
+      end
+    end
+
+    private :all_modified_files_coverage, :total_coverage_markdown, :only_modified_files_coverage, :only_added_files_coverage
   end
 end
