@@ -203,31 +203,31 @@ module Danger
 
     # Array of files that we have coverage information and was modified
     # @return [Array<File>]
-    def modified_files_coverage
+    def only_modified_files_coverage
       unless @project.nil?
-        @all_modified_files_coverage ||= begin
+        @only_modified_files_coverage ||= begin
           modified_files = git.modified_files.nil? ? [] : git.modified_files
           @project.coverage_files.select do |file|
             modified_files.include? file.source_file_pathname_relative_to_repo_root.to_s
           end
         end
 
-        @all_modified_files_coverage
+        @only_modified_files_coverage
       end
     end
 
     # Array of files that we have coverage information and was added
     # @return [Array<File>]
-    def added_files_coverage
+    def only_added_files_coverage
       unless @project.nil?
-        @all_added_files_coverage ||= begin
+        @only_added_files_coverage ||= begin
           added_files = git.added_files.nil? ? [] : git.added_files
           @project.coverage_files.select do |file|
             added_files.include? file.source_file_pathname_relative_to_repo_root.to_s
           end
         end
 
-        @all_added_files_coverage
+        @only_added_files_coverage
       end
     end
 
@@ -240,7 +240,7 @@ module Danger
       minimum_coverage = options[:minimum_coverage]
       notify_level = options[:notify_level] || :fail
 
-      added_files = added_files_coverage
+      added_files = only_added_files_coverage
 
       if added_files.count.positive?
         files_to_notify = added_files.select do |file|
@@ -269,7 +269,7 @@ module Danger
       minimum_coverage = options[:minimum_coverage]
       notify_level = options[:notify_level] || :warn
 
-      modified_files = modified_files_coverage
+      modified_files = only_modified_files_coverage
 
       if modified_files.count.positive?
         files_to_notify = modified_files.select do |file|
@@ -289,6 +289,6 @@ module Danger
       end
     end
 
-    private :all_modified_files_coverage, :total_coverage_markdown, :modified_files_coverage, :added_files_coverage
+    private :all_modified_files_coverage, :total_coverage_markdown, :only_modified_files_coverage, :only_added_files_coverage
   end
 end
