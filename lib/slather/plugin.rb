@@ -69,7 +69,6 @@ module Danger
       @project = Slather::Project.open(@@project_path)
       @project.scheme = @@project_scheme
       @project.workspace = @@project_workspace
-      @project.ignore_list = @@project_ignore_list
       @project.configure
 
       unless @project.nil?
@@ -83,6 +82,13 @@ module Danger
           @total_coverage = (total_project_lines_tested / total_project_lines.to_f) * 100.0
         end
       end
+
+      require 'slather'
+      @project = Slather::Project.open(@@project_path)
+      @project.scheme = @@project_scheme
+      @project.workspace = @@project_workspace
+      @project.ignore_list = @@project_ignore_list
+      @project.configure
     end
 
     # Method to check if the coverage of the project is at least a minumum
