@@ -62,15 +62,22 @@ module Danger
       @all_modified_files_coverage = nil
     end
 
-    # Total coverage of the project
-    # @return   [Float]
-    def total_coverage
+    def config_backup(include_ignore_list)
       require 'slather'
       @project = Slather::Project.open(@@project_path)
       @project.scheme = @@project_scheme
       @project.workspace = @@project_workspace
-      @project.configure
 
+      if include_ignore_list
+        @project.ignore_list = @@project_ignore_list
+      end
+
+      @project.configure
+    end
+
+    # Total coverage of the project
+    # @return   [Float]
+    def total_coverage
       unless @project.nil?
         @total_coverage ||= begin
           total_project_lines = 0
@@ -82,13 +89,6 @@ module Danger
           @total_coverage = (total_project_lines_tested / total_project_lines.to_f) * 100.0
         end
       end
-
-      require 'slather'
-      @project = Slather::Project.open(@@project_path)
-      @project.scheme = @@project_scheme
-      @project.workspace = @@project_workspace
-      @project.ignore_list = @@project_ignore_list
-      @project.configure
     end
 
     # Method to check if the coverage of the project is at least a minumum
@@ -97,6 +97,8 @@ module Danger
     # @option options [Symbol] :notify_level the level of notification
     # @return [Array<String>]
     def notify_if_coverage_is_less_than(options)
+      config_backup(false)
+
       minimum_coverage = options[:minimum_coverage]
       notify_level = options[:notify_level] || :fail
       if total_coverage < minimum_coverage
@@ -115,6 +117,8 @@ module Danger
     # @option options [Symbol] :notify_level the level of notification
     # @return [Array<String>]
     def notify_if_modified_file_is_less_than(options)
+      config_backup(true)
+
       minimum_coverage = options[:minimum_coverage]
       notify_level = options[:notify_level] || :fail
 
@@ -243,6 +247,8 @@ module Danger
     # @option options [Symbol] :notify_level the level of notification
     # @return [Array<String>]
     def notify_if_only_added_file_is_less_than(options)
+      config_backup(true)
+
       minimum_coverage = options[:minimum_coverage]
       notify_level = options[:notify_level] || :fail
 
@@ -272,6 +278,8 @@ module Danger
     # @option options [Symbol] :notify_level the level of notification
     # @return [Array<String>]
     def notify_if_only_modified_file_is_less_than(options)
+      config_backup(true)
+
       minimum_coverage = options[:minimum_coverage]
       notify_level = options[:notify_level] || :warn
 
@@ -295,6 +303,6 @@ module Danger
       end
     end
 
-    private :all_modified_files_coverage, :total_coverage_markdown, :only_modified_files_coverage, :only_added_files_coverage
+    private :all_modified_files_coverage, :total_coverage_markdown, :only_modified_files_coverage, :only_added_files_coverage, :config_backup
   end
 end
